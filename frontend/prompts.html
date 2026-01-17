@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompts | AI Prompt Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🐆</div>
+                <span class="logo-text">RiseOfTheJaguar</span>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i>
+                            Dashboard</a></li>
+                    <li class="nav-item"><a href="prompts.html" class="nav-link active"><i class="fas fa-file-alt"></i>
+                            Prompts</a></li>
+                    <li class="nav-item"><a href="versions.html" class="nav-link"><i class="fas fa-code-branch"></i>
+                            Versions</a></li>
+                    <li class="nav-item"><a href="evaluation.html" class="nav-link"><i class="fas fa-chart-bar"></i>
+                            Evaluation</a></li>
+                </ul>
+            </nav>
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="#" class="nav-link" onclick="api.auth.logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Prompts</h1>
+                    <p class="page-subtitle">Manage your prompt library</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="openModal('createPromptModal')"><i class="fas fa-plus"></i>
+                        New Prompt</button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-lg">
+                <div class="d-flex gap-md" style="flex-wrap: wrap;">
+                    <input type="text" id="searchInput" class="form-input" placeholder="Search prompts..."
+                        style="max-width: 300px;">
+                    <select id="taskTypeFilter" class="form-select" style="max-width: 180px;">
+                        <option value="">All Task Types</option>
+                        <option value="generation">Generation</option>
+                        <option value="analysis">Analysis</option>
+                        <option value="summarization">Summarization</option>
+                        <option value="translation">Translation</option>
+                    </select>
+                    <select id="domainFilter" class="form-select" style="max-width: 180px;">
+                        <option value="">All Domains</option>
+                        <option value="coding">Coding</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="education">Education</option>
+                        <option value="business">Business</option>
+                        <option value="creative">Creative</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Prompts Grid -->
+            <div id="promptsContainer">
+                <div class="empty-state">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Prompt Modal -->
+    <div class="modal-overlay" id="createPromptModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Prompt</h2>
+                <button class="modal-close" onclick="closeModal('createPromptModal')"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPromptForm">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" id="promptTitle" class="form-input" placeholder="e.g., Code Review Helper"
+                            required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Task Type</label>
+                            <select id="promptTaskType" class="form-select" required>
+                                <option value="generation">Generation</option>
+                                <option value="analysis">Analysis</option>
+                                <option value="summarization">Summarization</option>
+                                <option value="translation">Translation</option>
+                                <option value="classification">Classification</option>
+                                <option value="extraction">Extraction</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Domain</label>
+                            <select id="promptDomain" class="form-select">
+                                <option value="">Select domain</option>
+                                <option value="coding">Coding</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="education">Education</option>
+                                <option value="business">Business</option>
+                                <option value="creative">Creative</option>
+                                <option value="legal">Legal</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" id="promptDescription" class="form-input" placeholder="Brief description">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prompt Text</label>
+                        <textarea id="promptText" class="form-textarea" rows="6" placeholder="Write your prompt here..."
+                            required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createPromptModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createPrompt()"><i class="fas fa-save"></i> Create
+                    Prompt</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/sanitize.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        (async function () {
+            if (!requireAuth()) return;
+
+            let allPrompts = [];
+
+            async function loadPrompts() {
+                try {
+                    const data = await api.prompts.list();
+                    allPrompts = data.prompts;
+                    renderPrompts(allPrompts);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            function renderPrompts(prompts) {
+                const container = document.getElementById('promptsContainer');
+                if (prompts.length === 0) {
+                    container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-file-alt"></i></div>
+                        <h3>No prompts found</h3>
+                        <p>Create your first prompt to get started.</p>
+                        <button class="btn btn-primary" onclick="openModal('createPromptModal')"><i class="fas fa-plus"></i> Create Prompt</button>
+                    </div>
+                `;
+                } else {
+                    container.innerHTML = `<div class="prompt-grid">${prompts.map(renderPromptCard).join('')}</div>`;
+                }
+            }
+
+            async function createPrompt() {
+                try {
+                    await api.prompts.create({
+                        title: document.getElementById('promptTitle').value,
+                        task_type: document.getElementById('promptTaskType').value,
+                        domain: document.getElementById('promptDomain').value,
+                        description: document.getElementById('promptDescription').value,
+                        prompt_text: document.getElementById('promptText').value
+                    });
+                    showToast('Prompt created!', 'success');
+                    closeModal('createPromptModal');
+                    loadPrompts();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            function viewPrompt(id) {
+                window.location.href = `versions.html?prompt_id=${id}`;
+            }
+
+            // Filters
+            document.getElementById('searchInput').addEventListener('input', filterPrompts);
+            document.getElementById('taskTypeFilter').addEventListener('change', filterPrompts);
+            document.getElementById('domainFilter').addEventListener('change', filterPrompts);
+
+            function filterPrompts() {
+                const search = document.getElementById('searchInput').value.toLowerCase();
+                const taskType = document.getElementById('taskTypeFilter').value;
+                const domain = document.getElementById('domainFilter').value;
+
+                const filtered = allPrompts.filter(p => {
+                    const matchSearch = p.title.toLowerCase().includes(search) || (p.description || '').toLowerCase().includes(search);
+                    const matchTask = !taskType || p.task_type === taskType;
+                    const matchDomain = !domain || p.domain === domain;
+                    return matchSearch && matchTask && matchDomain;
+                });
+                renderPrompts(filtered);
+            }
+
+            // Expose functions globally for onclick handlers
+            window.createPrompt = createPrompt;
+            window.viewPrompt = viewPrompt;
+
+            loadPrompts();
+        })();
+    </script>
+</body>
+
+</html>

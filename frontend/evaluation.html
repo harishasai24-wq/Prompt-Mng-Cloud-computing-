@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation | AI Prompt Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🐆</div>
+                <span class="logo-text">RiseOfTheJaguar</span>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i>
+                            Dashboard</a></li>
+                    <li class="nav-item"><a href="prompts.html" class="nav-link"><i class="fas fa-file-alt"></i>
+                            Prompts</a></li>
+                    <li class="nav-item"><a href="versions.html" class="nav-link"><i class="fas fa-code-branch"></i>
+                            Versions</a></li>
+                    <li class="nav-item"><a href="evaluation.html" class="nav-link active"><i
+                                class="fas fa-chart-bar"></i> Evaluation</a></li>
+                </ul>
+            </nav>
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="#" class="nav-link" onclick="api.auth.logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">AI Evaluation</h1>
+                    <p class="page-subtitle">Analyze and score your prompts</p>
+                </div>
+            </div>
+
+            <!-- Quick Evaluate -->
+            <div class="card mb-lg">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-bolt text-accent"></i> Quick Evaluate</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Task Type</label>
+                            <select id="quickTaskType" class="form-select">
+                                <option value="generation">Generation</option>
+                                <option value="analysis">Analysis</option>
+                                <option value="summarization">Summarization</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Domain</label>
+                            <select id="quickDomain" class="form-select">
+                                <option value="">None</option>
+                                <option value="coding">Coding</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="education">Education</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prompt Text</label>
+                        <textarea id="quickPromptText" class="form-textarea" rows="4"
+                            placeholder="Enter prompt to evaluate..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="quickEvaluate()"><i class="fas fa-magic"></i> Evaluate
+                        Now</button>
+                </div>
+            </div>
+
+            <!-- Quick Results -->
+            <div class="card mb-lg" id="quickResultsCard" style="display: none;">
+                <div class="card-header">
+                    <h2 class="card-title">Evaluation Results</h2>
+                </div>
+                <div class="card-body" id="quickResults"></div>
+            </div>
+
+            <!-- Prompt Evaluation -->
+            <div class="card mb-lg">
+                <div class="card-header">
+                    <h2 class="card-title">Evaluate Saved Prompts</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Select Prompt</label>
+                        <select id="promptSelector" class="form-select" onchange="loadPromptVersions()">
+                            <option value="">-- Select a prompt --</option>
+                        </select>
+                    </div>
+                    <div id="versionsList" style="display: none;">
+                        <label class="form-label">Select Version to Evaluate</label>
+                        <select id="versionSelector" class="form-select"></select>
+                        <button class="btn btn-success mt-md" onclick="evaluateSelected()"><i
+                                class="fas fa-chart-bar"></i> Evaluate Version</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendation -->
+            <div class="card" id="recommendationCard" style="display: none;">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-trophy text-accent"></i> Recommended Version</h2>
+                </div>
+                <div class="card-body" id="recommendationContent"></div>
+            </div>
+
+            <!-- Evaluations History -->
+            <div class="card mt-lg" id="evaluationsCard" style="display: none;">
+                <div class="card-header">
+                    <h2 class="card-title">Evaluation History</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Clarity</th>
+                                    <th>Relevance</th>
+                                    <th>Length</th>
+                                    <th>Final</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evaluationsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/sanitize.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        (async function () {
+            if (!requireAuth()) return;
+
+            let currentPromptId = null;
+
+            async function loadPromptsList() {
+                try {
+                    const data = await api.prompts.list();
+                    const selector = document.getElementById('promptSelector');
+                    data.prompts.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.id;
+                        option.textContent = `${p.title} (${p.task_type})`;
+                        selector.appendChild(option);
+                    });
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            async function loadPromptVersions() {
+                const promptId = document.getElementById('promptSelector').value;
+                if (!promptId) {
+                    document.getElementById('versionsList').style.display = 'none';
+                    return;
+                }
+
+                currentPromptId = promptId;
+
+                try {
+                    const data = await api.versions.list(promptId);
+                    const selector = document.getElementById('versionSelector');
+                    selector.innerHTML = '';
+                    data.versions.forEach(v => {
+                        const option = document.createElement('option');
+                        option.value = v.id;
+                        option.textContent = `v${v.version_number} ${v.is_current ? '(current)' : ''} - ${formatDate(v.created_at)}`;
+                        selector.appendChild(option);
+                    });
+                    document.getElementById('versionsList').style.display = 'block';
+
+                    // Load evaluations and recommendation
+                    loadEvaluations(promptId);
+                    loadRecommendation(promptId);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            async function quickEvaluate() {
+                const text = document.getElementById('quickPromptText').value;
+                const taskType = document.getElementById('quickTaskType').value;
+                const domain = document.getElementById('quickDomain').value;
+
+                if (!text.trim()) {
+                    showToast('Please enter prompt text', 'warning');
+                    return;
+                }
+
+                try {
+                    const result = await api.evaluation.quickEvaluate(text, taskType, domain);
+                    document.getElementById('quickResultsCard').style.display = 'block';
+                    // XSS-safe: escape suggestions before rendering
+                    const safeSuggestions = (result.suggestions || []).map(s =>
+                        `<li>${escapeHtml(s)}</li>`
+                    ).join('');
+                    document.getElementById('quickResults').innerHTML = `
+                    ${renderScoreDisplay(result.evaluation)}
+                    <div class="mt-lg">
+                        <h4>Suggestions</h4>
+                        <ul style="padding-left: 1.5rem; color: var(--text-secondary);">
+                            ${safeSuggestions}
+                        </ul>
+                    </div>
+                `;
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            async function evaluateSelected() {
+                const versionId = document.getElementById('versionSelector').value;
+                if (!versionId) return;
+
+                try {
+                    const result = await api.evaluation.evaluate(versionId);
+                    showToast('Evaluation complete!', 'success');
+
+                    document.getElementById('quickResultsCard').style.display = 'block';
+                    // XSS-safe: escape suggestions before rendering
+                    const safeSuggestions = (result.suggestions || []).map(s =>
+                        `<li>${escapeHtml(s)}</li>`
+                    ).join('');
+                    document.getElementById('quickResults').innerHTML = `
+                    ${renderScoreDisplay(result.evaluation)}
+                    <div class="mt-lg">
+                        <h4>Suggestions</h4>
+                        <ul style="padding-left: 1.5rem; color: var(--text-secondary);">
+                            ${safeSuggestions}
+                        </ul>
+                    </div>
+                `;
+
+                    loadEvaluations(currentPromptId);
+                    loadRecommendation(currentPromptId);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            async function loadEvaluations(promptId) {
+                try {
+                    const data = await api.evaluation.getEvaluations(promptId);
+                    if (data.evaluations.length > 0) {
+                        document.getElementById('evaluationsCard').style.display = 'block';
+                        document.getElementById('evaluationsTable').innerHTML = data.evaluations.map(e => `
+                        <tr>
+                            <td><span class="badge badge-primary">v${e.version_number}</span></td>
+                            <td class="${getScoreClass(e.clarity_score)}">${e.clarity_score}</td>
+                            <td class="${getScoreClass(e.relevance_score)}">${e.relevance_score}</td>
+                            <td class="${getScoreClass(e.length_score)}">${e.length_score}</td>
+                            <td><strong class="${getScoreClass(e.final_score)}">${e.final_score}</strong></td>
+                            <td class="text-muted">${formatDate(e.evaluated_at)}</td>
+                        </tr>
+                    `).join('');
+                    }
+                } catch (error) {
+                    console.error('Failed to load evaluations:', error);
+                }
+            }
+
+            async function loadRecommendation(promptId) {
+                try {
+                    const data = await api.evaluation.getRecommendation(promptId);
+                    document.getElementById('recommendationCard').style.display = 'block';
+                    document.getElementById('recommendationContent').innerHTML = `
+                    <div class="d-flex align-center gap-md mb-md">
+                        <span class="badge badge-success" style="font-size: 1rem; padding: 0.5rem 1rem;">v${data.recommendation.version.version_number}</span>
+                        <span class="text-muted">Final Score: <strong class="${getScoreClass(data.recommendation.evaluation.final_score)}">${data.recommendation.evaluation.final_score}</strong></span>
+                    </div>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; white-space: pre-wrap; font-size: 0.875rem;">${data.recommendation.version.prompt_text}</pre>
+                `;
+                } catch (error) {
+                    document.getElementById('recommendationCard').style.display = 'none';
+                }
+            }
+
+            // Expose functions globally for onclick handlers
+            window.loadPromptVersions = loadPromptVersions;
+            window.quickEvaluate = quickEvaluate;
+            window.evaluateSelected = evaluateSelected;
+
+            loadPromptsList();
+
+            // Check URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const versionId = urlParams.get('version_id');
+            if (versionId) {
+                // Auto-evaluate if version_id in URL
+                setTimeout(async () => {
+                    try {
+                        const result = await api.evaluation.evaluate(versionId);
+                        showToast('Evaluation complete!', 'success');
+                        document.getElementById('quickResultsCard').style.display = 'block';
+                        document.getElementById('quickResults').innerHTML = renderScoreDisplay(result.evaluation);
+                    } catch (error) {
+                        showToast(error.message, 'error');
+                    }
+                }, 500);
+            }
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | AI Prompt Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🐆</div>
+                <span class="logo-text">RiseOfTheJaguar</span>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link active"><i class="fas fa-home"></i>
+                            Dashboard</a></li>
+                    <li class="nav-item"><a href="prompts.html" class="nav-link"><i class="fas fa-file-alt"></i>
+                            Prompts</a></li>
+                    <li class="nav-item"><a href="versions.html" class="nav-link"><i class="fas fa-code-branch"></i>
+                            Versions</a></li>
+                    <li class="nav-item"><a href="evaluation.html" class="nav-link"><i class="fas fa-chart-bar"></i>
+                            Evaluation</a></li>
+                </ul>
+            </nav>
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="#" class="nav-link" onclick="api.auth.logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Welcome back! Here's your overview.</p>
+                </div>
+                <div class="page-actions">
+                    <a href="prompts.html" class="btn btn-primary"><i class="fas fa-plus"></i> New Prompt</a>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon primary"><i class="fas fa-file-alt"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalPrompts">-</h3>
+                        <p>Total Prompts</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon secondary"><i class="fas fa-code-branch"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalVersions">-</h3>
+                        <p>Total Versions</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon accent"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-info">
+                        <h3 id="avgScore">-</h3>
+                        <p>Avg. Score</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger"><i class="fas fa-tags"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalTags">-</h3>
+                        <p>Active Tags</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Prompts -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Prompts</h2>
+                    <a href="prompts.html" class="btn btn-ghost btn-sm">View All</a>
+                </div>
+                <div class="card-body" id="recentPrompts">
+                    <div class="empty-state">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Type Distribution -->
+            <div class="card mt-lg">
+                <div class="card-header">
+                    <h2 class="card-title">Prompts by Task Type</h2>
+                </div>
+                <div class="card-body" id="taskTypeStats">
+                    <div class="empty-state">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/sanitize.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        (async function () {
+            if (!requireAuth()) return;
+
+            async function loadDashboard() {
+                try {
+                    const stats = await api.prompts.getStats();
+                    const tags = await api.tags.list();
+
+                    document.getElementById('totalPrompts').textContent = stats.stats.total_prompts;
+                    document.getElementById('totalVersions').textContent = stats.stats.total_versions;
+                    document.getElementById('avgScore').textContent = '-';
+                    document.getElementById('totalTags').textContent = tags.tags.length;
+
+                    // Recent prompts
+                    const recentEl = document.getElementById('recentPrompts');
+                    if (stats.stats.recent_prompts.length > 0) {
+                        recentEl.innerHTML = `<div class="prompt-grid">${stats.stats.recent_prompts.map(renderPromptCard).join('')}</div>`;
+                    } else {
+                        recentEl.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-file-alt"></i></div>
+                            <h3>No prompts yet</h3>
+                            <p>Create your first prompt to get started.</p>
+                            <a href="prompts.html" class="btn btn-primary"><i class="fas fa-plus"></i> Create Prompt</a>
+                        </div>
+                    `;
+                    }
+
+                    // Task type stats
+                    const taskStats = stats.stats.by_task_type;
+                    const taskTypeEl = document.getElementById('taskTypeStats');
+                    if (Object.keys(taskStats).length > 0) {
+                        taskTypeEl.innerHTML = `
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            ${Object.entries(taskStats).map(([type, count]) => `
+                                <div class="badge badge-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                                    ${type}: ${count}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    } else {
+                        taskTypeEl.innerHTML = '<p class="text-muted">No data yet</p>';
+                    }
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+
+            function viewPrompt(id) {
+                window.location.href = `prompts.html?id=${id}`;
+            }
+
+            // Expose functions globally for onclick handlers
+            window.viewPrompt = viewPrompt;
+
+            loadDashboard();
+        })();
+    </script>
+</body>
+
+</html>

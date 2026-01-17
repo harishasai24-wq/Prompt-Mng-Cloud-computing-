@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AI Prompt Manager</title>
+    <meta name="description" content="AI-Assisted Prompt Management System - Login">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card fade-in">
+            <div class="login-logo">
+                <div class="logo-icon">🐆</div>
+                <h1>RiseOfTheJaguar</h1>
+                <p>AI-Assisted Prompt Management</p>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username or Email</label>
+                    <input type="text" id="username" class="form-input" placeholder="Enter username" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Create Account</h2>
+                <button class="modal-close" onclick="closeModal('registerModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="regFullName" class="form-input" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="regUsername" class="form-input" placeholder="johndoe" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="regEmail" class="form-input" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="regPassword" class="form-input" placeholder="Min 6 characters"
+                            required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('registerModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="handleRegister()">Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/sanitize.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (api.auth.isAuthenticated()) {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Login handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            setLoading(btn, true);
+
+            try {
+                await api.auth.login(
+                    document.getElementById('username').value,
+                    document.getElementById('password').value
+                );
+                showToast('Login successful!', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 500);
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                setLoading(btn, false);
+            }
+        });
+
+        function showRegister() {
+            openModal('registerModal');
+        }
+
+        async function handleRegister() {
+            try {
+                await api.auth.register(
+                    document.getElementById('regUsername').value,
+                    document.getElementById('regEmail').value,
+                    document.getElementById('regPassword').value,
+                    document.getElementById('regFullName').value
+                );
+                showToast('Account created!', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 500);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>
