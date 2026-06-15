@@ -21,7 +21,7 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
     
     # CORS configuration
-    CORS_ORIGINS = ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000']
+    CORS_ORIGINS = '*'
     
     # AI Engine configuration
     AI_WEIGHTS = {

@@ -15,7 +15,11 @@ python-dotenv==1.0.0
 
 # Utilities
 gunicorn==21.2.0
+requests==2.31.0
 
 # AI / Analytics
 textstat==0.7.3
 textblob==0.17.1
+
+# Testing
+pytest==7.4.3

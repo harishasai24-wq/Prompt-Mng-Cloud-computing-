@@ -15,8 +15,8 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon">🐆</div>
-                <span class="logo-text">RiseOfTheJaguar</span>
+                <div class="logo-icon">👨‍💼</div>
+                <span class="logo-text">Prompt_Manager</span>
             </div>
             <nav>
                 <ul class="nav-menu">
@@ -39,7 +39,7 @@
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">Dashboard</h1>
+                    <h1 class="page-title"><span id="typewriter-text"></span><span class="cursor">|</span></h1>
                     <p class="page-subtitle">Welcome back! Here's your overview.</p>
                 </div>
                 <div class="page-actions">
@@ -122,8 +122,8 @@
 
                     document.getElementById('totalPrompts').textContent = stats.stats.total_prompts;
                     document.getElementById('totalVersions').textContent = stats.stats.total_versions;
-                    document.getElementById('avgScore').textContent = '-';
-                    document.getElementById('totalTags').textContent = tags.tags.length;
+                    document.getElementById('avgScore').textContent = stats.stats.avg_score !== 0 ? stats.stats.avg_score : '-';
+                    document.getElementById('totalTags').textContent = stats.stats.active_tags;
 
                     // Recent prompts
                     const recentEl = document.getElementById('recentPrompts');
@@ -169,6 +169,48 @@
             window.viewPrompt = viewPrompt;
 
             loadDashboard();
+
+            // Typewriter Effect
+            const phrases = [
+                "I am your Prompt Manager",
+                "Hey bro what's up",
+                "I manage your prompts",
+                "Prompts Evaluator"
+            ];
+
+            let phraseIndex = 0;
+            let charIndex = 0;
+            let isDeleting = false;
+            let typeSpeed = 100;
+            const typeWriterElement = document.getElementById('typewriter-text');
+
+            function typeWriter() {
+                const currentPhrase = phrases[phraseIndex];
+
+                if (isDeleting) {
+                    typeWriterElement.textContent = currentPhrase.substring(0, charIndex - 1);
+                    charIndex--;
+                    typeSpeed = 50;
+                } else {
+                    typeWriterElement.textContent = currentPhrase.substring(0, charIndex + 1);
+                    charIndex++;
+                    typeSpeed = 100;
+                }
+
+                if (!isDeleting && charIndex === currentPhrase.length) {
+                    isDeleting = true;
+                    typeSpeed = 2000; // Pause at end
+                } else if (isDeleting && charIndex === 0) {
+                    isDeleting = false;
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+                    typeSpeed = 500; // Pause before typing next
+                }
+
+                setTimeout(typeWriter, typeSpeed);
+            }
+
+            // Start typing
+            typeWriter();
         })();
     </script>
 </body>

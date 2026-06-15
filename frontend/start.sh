@@ -3,7 +3,7 @@
 
 cd "$(dirname "$0")"
 
-echo "🐆 Starting RiseOfTheJaguar Frontend..."
+echo "🐆 Starting Prompt_Manager Frontend..."
 echo "📍 URL: http://localhost:5500"
 
 # Open browser after a short delay (in background)

@@ -4,7 +4,7 @@ CRUD operations for prompts
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Prompt, PromptVersion, PromptTag
+from models import db, Prompt, PromptVersion, PromptTag, PromptEvaluation
 
 prompts_bp = Blueprint('prompts', __name__)
 
@@ -346,10 +346,28 @@ def get_stats():
         Prompt.updated_at.desc()
     ).limit(5).all()
     
+    # Average Score
+    avg_score = db.session.query(db.func.avg(PromptEvaluation.final_score)).join(
+        PromptVersion
+    ).join(
+        Prompt
+    ).filter(
+        Prompt.user_id == user_id
+    ).scalar()
+    
+    # Active Tags (unique tags used in user's prompts)
+    active_tags_count = db.session.query(db.func.count(db.distinct(PromptTag.id))).join(
+        PromptTag.prompts
+    ).filter(
+        Prompt.user_id == user_id
+    ).scalar()
+    
     return jsonify({
         'stats': {
             'total_prompts': total_prompts,
             'total_versions': total_versions,
+            'avg_score': round(float(avg_score), 1) if avg_score else 0,
+            'active_tags': active_tags_count,
             'by_task_type': dict(task_type_stats),
             'by_domain': dict(domain_stats),
             'recent_prompts': [p.to_dict() for p in recent]

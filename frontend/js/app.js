@@ -89,10 +89,21 @@ function setLoading(element, loading) {
     }
 }
 
-// Format date
+// Format date with time
 function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    // Append 'Z' to ensure it's treated as UTC if it lacks timezone info
+    if (!dateString.endsWith('Z') && !dateString.includes('+')) {
+        dateString += 'Z';
+    }
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
 // Get score class

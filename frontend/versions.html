@@ -14,8 +14,8 @@
     <div class="app-layout">
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon">🐆</div>
-                <span class="logo-text">RiseOfTheJaguar</span>
+                <div class="logo-icon">👨‍💼</div>
+                <span class="logo-text">Prompt_Manager</span>
             </div>
             <nav>
                 <ul class="nav-menu">
@@ -56,7 +56,6 @@
                 </div>
             </div>
 
-            <!-- Current Version -->
             <div class="card mb-lg" id="currentVersionCard" style="display: none;">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-star text-primary"></i> Current Version</h2>
@@ -65,6 +64,15 @@
                 <div class="card-body">
                     <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.875rem;"
                         id="currentVersionText"></pre>
+
+                    <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                        <button class="btn btn-primary" style="width: 100%;" onclick="openModal('editPromptModal')">
+                            <i class="fas fa-pen-fancy"></i> Edit & Create New Version
+                        </button>
+                        <p class="text-muted" style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem;">
+                            Editing creates a new version automatically. Old versions are saved in history.
+                        </p>
+                    </div>
                 </div>
             </div>
 

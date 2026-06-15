@@ -2,7 +2,12 @@
  * API Client for AI-Assisted Prompt Management System
  */
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const isCapacitor = window.Capacitor !== undefined;
+
+// Use 10.0.2.2 for Android Emulator to access host machine, otherwise localhost
+const API_BASE_URL = isCapacitor 
+    ? 'http://10.0.2.2:5001/api' 
+    : 'http://localhost:5001/api';
 
 const TokenManager = {
     get() { return localStorage.getItem('access_token'); },

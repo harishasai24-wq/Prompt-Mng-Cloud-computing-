@@ -1,0 +1,35 @@
+# Python files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+backend/venv/
+pip-log.txt
+pip-delete-this-directory.txt
+var/
+sdist/
+egg-info/
+.eggs/
+
+# Databases
+*.db
+*.sqlite3
+backend/prompt_management.db
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
