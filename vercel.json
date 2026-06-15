@@ -4,10 +4,6 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -17,19 +13,19 @@
     },
     {
       "src": "/css/(.*)",
-      "dest": "frontend/css/$1"
+      "dest": "/css/$1"
     },
     {
       "src": "/js/(.*)",
-      "dest": "frontend/js/$1"
+      "dest": "/js/$1"
     },
     {
       "src": "/(index.html|dashboard.html|dashboard_analytics.html|evaluation.html|prompts.html|versions.html)",
-      "dest": "frontend/$1"
+      "dest": "/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/index.html"
+      "dest": "/index.html"
     }
   ]
 }

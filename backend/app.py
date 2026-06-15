@@ -28,8 +28,8 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
     
-    # Serve frontend from ../frontend folder
-    frontend_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+    # Serve frontend from the root folder
+    frontend_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
     
     app = Flask(__name__, 
                 static_folder=frontend_folder,
