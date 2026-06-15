@@ -62,6 +62,7 @@ const api = {
                         window.location.href = 'index.html';
                     }
                 }
+                console.error("API Error Response:", data);
                 throw new Error(data.error || 'Request failed');
             }
             return data;
