@@ -96,6 +96,14 @@ def create_app(config_name=None):
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
+        if os.environ.get('VERCEL'):
+            import traceback
+            tb = traceback.format_exc()
+            return jsonify({
+                'error': 'Internal server error',
+                'exception': str(error),
+                'traceback': tb.split('\n')
+            }), 500
         return jsonify({'error': 'Internal server error'}), 500
     
     # ═══════════════════════════════════════════════════════════════════════════
