@@ -16,8 +16,12 @@ class Config:
         db_path = '/tmp/prompt_management.db'
     else:
         db_path = os.path.join(BASE_DIR, 'prompt_management.db')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        f'sqlite:///{db_path}'
+    
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
+    SQLALCHEMY_DATABASE_URI = db_url or f'sqlite:///{db_path}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT configuration - use same key as SECRET_KEY for consistency

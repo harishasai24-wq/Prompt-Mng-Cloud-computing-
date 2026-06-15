@@ -40,17 +40,21 @@ def create_app(config_name=None):
     db.init_app(app)
     jwt.init_app(app)
     
-    # Automatically create tables in serverless / SQLite environments if they don't exist
-    if os.environ.get('VERCEL') or app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
-        with app.app_context():
-            db.create_all()
-            # Also seed some demo data if the database was just created/empty
-            from models import User
-            try:
-                if not User.query.first():
-                    seed_demo_data(app)
-            except Exception:
-                pass
+    # Lazy database initialization for serverless / SQLite environments
+    _db_initialized = [False]
+    
+    @app.before_request
+    def initialize_database():
+        if not _db_initialized[0]:
+            if os.environ.get('VERCEL') or app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
+                try:
+                    db.create_all()
+                    from models import User
+                    if not User.query.first():
+                        seed_demo_data(app)
+                except Exception as e:
+                    app.logger.error(f"Lazy database initialization failed: {e}")
+            _db_initialized[0] = True
     
     # Configure CORS
     CORS(app, origins=app.config.get('CORS_ORIGINS', '*'), 
