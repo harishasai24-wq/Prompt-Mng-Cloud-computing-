@@ -40,6 +40,18 @@ def create_app(config_name=None):
     db.init_app(app)
     jwt.init_app(app)
     
+    # Automatically create tables in serverless / SQLite environments if they don't exist
+    if os.environ.get('VERCEL') or app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
+        with app.app_context():
+            db.create_all()
+            # Also seed some demo data if the database was just created/empty
+            from models import User
+            try:
+                if not User.query.first():
+                    seed_demo_data(app)
+            except Exception:
+                pass
+    
     # Configure CORS
     CORS(app, origins=app.config.get('CORS_ORIGINS', '*'), 
          supports_credentials=True)
@@ -150,18 +162,17 @@ def check_db_connection(app):
 
 def init_db():
     """Initialize the database"""
-    app = create_app()
     with app.app_context():
         db.create_all()
         print("Database tables created successfully!")
 
 
-def seed_demo_data():
+def seed_demo_data(app_instance=None):
     """Seed demo data for testing"""
     from models import User, Prompt, PromptVersion, PromptTag
     
-    app = create_app()
-    with app.app_context():
+    target_app = app_instance or app
+    with target_app.app_context():
         # Create demo user
         demo_user = User.query.filter_by(username='demo').first()
         if not demo_user:
@@ -231,6 +242,9 @@ def seed_demo_data():
 # MAIN ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# Create the global app instance for WSGI/Vercel serverless deployment
+app = create_app()
+
 if __name__ == '__main__':
     import sys
     
@@ -242,5 +256,4 @@ if __name__ == '__main__':
         else:
             print(f"Unknown command: {sys.argv[1]}")
     else:
-        app = create_app()
         app.run(host='0.0.0.0', port=5001, debug=True)

@@ -4,10 +4,11 @@
 
 const isCapacitor = window.Capacitor !== undefined;
 
-// Use 10.0.2.2 for Android Emulator to access host machine, otherwise localhost
 const API_BASE_URL = isCapacitor 
     ? 'http://10.0.2.2:5001/api' 
-    : 'http://localhost:5001/api';
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:5001/api'
+        : '/api';
 
 const TokenManager = {
     get() { return localStorage.getItem('access_token'); },
