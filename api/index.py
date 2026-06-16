@@ -260,7 +260,23 @@ def seed_demo_data(app_instance=None):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Create the global app instance for WSGI/Vercel serverless deployment
-app = create_app()
+try:
+    app = create_app()
+except Exception as e:
+    from flask import Flask, jsonify
+    import traceback
+    
+    app = Flask(__name__)
+    
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def catch_all(path):
+        return jsonify({
+            'error': 'Flask app initialization failed',
+            'exception': str(e),
+            'traceback': traceback.format_exc().split('\n')
+        }), 500
+
 
 if __name__ == '__main__':
     import sys
