@@ -6,7 +6,7 @@ import os
 # Add the parent directory to sys.path so we can import app and models
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import create_app
+from api.index import create_app
 from models import db, User, Prompt, PromptVersion
 
 @pytest.fixture

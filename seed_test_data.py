@@ -4,7 +4,7 @@ Seeds the database with diverse prompts, versions, evaluations, and tags
 """
 from datetime import datetime, timedelta
 import random
-from app import create_app
+from api.index import create_app
 from models import db, User, Prompt, PromptVersion, PromptEvaluation, PromptTag
 
 def seed_test_data():
@@ -12,6 +12,7 @@ def seed_test_data():
     app = create_app()
     
     with app.app_context():
+        db.create_all()
         print("🌱 Starting test data seeding...")
         
         # ═══════════════════════════════════════════════════════════════════
